@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HumanizationLevel, WritingMode } from '../types';
+import { HumanizationLevel, WritingMode, LengthMode, EmotionIntensity } from '../types';
 import { getStats } from '../services/textProcessingService';
 import { initLLM, generateHumanizedText, LLMStatus } from '../services/llmService';
 import { Wand2, Copy, Check, Trash2, RefreshCw, ArrowRight, BrainCircuit } from 'lucide-react';
@@ -10,28 +10,66 @@ const HumanizePage: React.FC = () => {
   const [outputText, setOutputText] = useState('');
   const [level, setLevel] = useState<HumanizationLevel>(HumanizationLevel.Medium);
   const [mode, setMode] = useState<WritingMode>(WritingMode.General);
+  const [lengthMode, setLengthMode] = useState<LengthMode>(LengthMode.Original);
+  const [emotionIntensity, setEmotionIntensity] = useState<EmotionIntensity>(EmotionIntensity.Neutral);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [copied, setCopied] = useState(false);
   const [llmStatus, setLlmStatus] = useState<LLMStatus>({ status: 'idle', progress: '', progressValue: 0 });
 
   const stats = getStats(inputText);
+  const outputStats = getStats(outputText);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isProcessing) {
+      setElapsedTime(0);
+      interval = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isProcessing]);
+
+  const getEstimatedTime = () => {
+    if (progress <= 0 || elapsedTime <= 0) return null;
+    // Simple estimation: if 10% took 2s, 100% takes 20s. Remaining = 18s.
+    // We can smooth it out or just use raw calculation.
+    const totalEstimated = (elapsedTime / progress) * 100;
+    const remaining = totalEstimated - elapsedTime;
+    return Math.max(0, Math.round(remaining));
+  };
+
+  const remainingTime = getEstimatedTime();
 
   const handleHumanize = async () => {
     if (!inputText.trim()) return;
     setIsProcessing(true);
+    setProgress(0);
 
     try {
       // Initialize LLM if needed
       if (llmStatus.status !== 'ready') {
-          await initLLM((status) => setLlmStatus(status));
+        await initLLM((status) => setLlmStatus(status));
       }
-      const result = await generateHumanizedText(inputText, level, mode);
+      const result = await generateHumanizedText(
+        inputText, 
+        level, 
+        mode, 
+        lengthMode, 
+        emotionIntensity,
+        (p) => setProgress(p)
+      );
       setOutputText(result);
     } catch (error) {
       console.error("Humanization failed:", error);
       alert("Failed to process text. Please try again.");
     } finally {
       setIsProcessing(false);
+      setProgress(0);
     }
   };
 
@@ -49,7 +87,7 @@ const HumanizePage: React.FC = () => {
 
   const renderDiff = () => {
     if (!outputText) return null;
-    
+
     // If input text is empty or very different, just show output
     if (!inputText) return <span className="text-slate-800 dark:text-slate-200">{outputText}</span>;
 
@@ -83,84 +121,120 @@ const HumanizePage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-        
+
         {/* Left Column: Settings & Input */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          
+
           {/* Settings Card */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6 transition-colors">
-             
-             {/* Model Loading Progress */}
-             {llmStatus.status === 'loading' && (
-                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-                     <div className="flex justify-between text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                         <span>{llmStatus.progress}</span>
-                         <span>{Math.round(llmStatus.progressValue * 100)}%</span>
-                     </div>
-                     <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
-                         <div 
-                            className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300" 
-                            style={{ width: `${llmStatus.progressValue * 100}%` }}
-                         ></div>
-                     </div>
-                     <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1">First time load may take a few minutes (~1GB download).</p>
-                 </div>
-             )}
 
-             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                
-                {/* Level Selector */}
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Humanization Level</label>
-                  <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
-                    {Object.values(HumanizationLevel).map((l) => (
-                      <button
-                        key={l}
-                        onClick={() => setLevel(l)}
-                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${
-                          level === l 
-                            ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm' 
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                      >
-                        {l}
-                      </button>
-                    ))}
-                  </div>
+            {/* Model Loading Progress */}
+            {llmStatus.status === 'loading' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                <div className="flex justify-between text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                  <span>{llmStatus.progress}</span>
+                  <span>{Math.round(llmStatus.progressValue * 100)}%</span>
                 </div>
+                <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${llmStatus.progressValue * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1">First time load may take a few minutes (~1GB download).</p>
+              </div>
+            )}
 
-                {/* Mode Selector */}
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Writing Mode</label>
-                  <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
-                    {Object.values(WritingMode).map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => setMode(m)}
-                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${
-                          mode === m 
-                            ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm' 
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Level Selector */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Humanization Level</label>
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                  {Object.values(HumanizationLevel).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLevel(l)}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${level === l
+                        ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                         }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
+                    >
+                      {l}
+                    </button>
+                  ))}
                 </div>
-             </div>
+              </div>
+
+              {/* Mode Selector */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Writing Mode</label>
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                  {Object.values(WritingMode).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setMode(m)}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${mode === m
+                        ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Length Selector */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Length Mode</label>
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                  {Object.values(LengthMode).map((lm) => (
+                    <button
+                      key={lm}
+                      onClick={() => setLengthMode(lm)}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${lengthMode === lm
+                        ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        }`}
+                    >
+                      {lm}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Emotion Intensity Selector */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">Emotion Intensity</label>
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                  {Object.values(EmotionIntensity).map((ei) => (
+                    <button
+                      key={ei}
+                      onClick={() => setEmotionIntensity(ei)}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 ${emotionIntensity === ei
+                        ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        }`}
+                    >
+                      {ei}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Input Area */}
           <div className="flex-1 relative group">
             <div className="absolute top-0 right-0 p-2 z-10">
-                 <button 
-                    onClick={clearText}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
-                    title="Clear text"
-                 >
-                    <Trash2 className="w-4 h-4" />
-                 </button>
+              <button
+                onClick={clearText}
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                title="Clear text"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
             <textarea
               value={inputText}
@@ -168,25 +242,31 @@ const HumanizePage: React.FC = () => {
               placeholder="Paste your AI-generated text here..."
               className="w-full h-64 lg:h-96 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-slate-700 dark:text-slate-200 text-lg leading-relaxed shadow-sm bg-white dark:bg-slate-800 placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-colors"
             />
-             <div className="absolute bottom-4 right-6 text-xs text-slate-400 dark:text-slate-500 font-medium pointer-events-none">
-                {stats.words} words | {stats.chars} chars
-             </div>
+            <div className="absolute bottom-4 right-6 text-xs text-slate-400 dark:text-slate-500 font-medium pointer-events-none">
+              {stats.words} words | {stats.chars} chars
+            </div>
           </div>
 
           <button
             onClick={handleHumanize}
             disabled={isProcessing || !inputText}
-            className={`w-full py-4 px-6 rounded-xl flex items-center justify-center gap-2 text-lg font-bold text-white shadow-lg transition-all transform active:scale-[0.98] ${
-               isProcessing || !inputText 
-               ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
-               : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 hover:shadow-indigo-200 dark:hover:shadow-none'
-            }`}
+            className={`w-full py-4 px-6 rounded-xl flex items-center justify-center gap-2 text-lg font-bold text-white shadow-lg transition-all transform active:scale-[0.98] ${isProcessing || !inputText
+              ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
+              : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 hover:shadow-indigo-200 dark:hover:shadow-none'
+              }`}
           >
             {isProcessing ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                Processing...
-              </>
+              <div className="flex flex-col items-center text-sm">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  Processing... {progress > 0 && `${progress}%`}
+                </div>
+                {progress > 0 && (
+                  <span className="text-xs opacity-80 font-normal mt-1">
+                    {elapsedTime}s elapsed {remainingTime !== null && `/ ~${remainingTime}s left`}
+                  </span>
+                )}
+              </div>
             ) : (
               <>
                 <Wand2 className="w-5 h-5" />
@@ -204,28 +284,32 @@ const HumanizePage: React.FC = () => {
               <button
                 onClick={handleCopy}
                 disabled={!outputText}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  copied 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
-                    : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${copied
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                  }`}
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
-            <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/30">
-               {outputText ? (
-                 renderDiff()
-               ) : (
-                 <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600">
-                    <ArrowRight className="w-12 h-12 mb-4 opacity-20" />
-                    <p className="text-sm font-medium">Your humanized text will appear here</p>
-                 </div>
-               )}
+            <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/30 relative">
+              {outputText ? (
+                renderDiff()
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600">
+                  <ArrowRight className="w-12 h-12 mb-4 opacity-20" />
+                  <p className="text-sm font-medium">Your humanized text will appear here</p>
+                </div>
+              )}
+              {outputText && (
+                <div className="absolute bottom-4 right-6 text-xs text-slate-400 dark:text-slate-500 font-medium pointer-events-none bg-white/80 dark:bg-slate-800/80 px-2 py-1 rounded backdrop-blur-sm">
+                  {outputStats.words} words | {outputStats.chars} chars
+                </div>
+              )}
             </div>
           </div>
-          
+
           {/* Mini Guide */}
           <div className="mt-6 bg-indigo-900 dark:bg-indigo-950 rounded-xl p-6 text-white shadow-lg">
             <h3 className="font-bold text-lg mb-2">Pro Tip</h3>

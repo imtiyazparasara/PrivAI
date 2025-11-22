@@ -8,21 +8,45 @@ const TextToAIPage: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [copied, setCopied] = useState(false);
   const [llmStatus, setLlmStatus] = useState<LLMStatus>({ status: 'idle', progress: '', progressValue: 0 });
 
   const stats = getStats(inputText);
+  const outputStats = getStats(outputText);
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedTime(0);
+      setProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  const getEstimatedTime = () => {
+    if (progress === 0 || elapsedTime < 2) return "Calculating...";
+    const totalTime = (elapsedTime / progress) * 100;
+    const remaining = Math.max(0, Math.round(totalTime - elapsedTime));
+    return `${remaining}s remaining`;
+  };
 
   const handleRewrite = async () => {
     if (!inputText.trim()) return;
     setIsProcessing(true);
+    setProgress(0);
 
     try {
       // Initialize LLM if needed
       if (llmStatus.status !== 'ready') {
           await initLLM((status) => setLlmStatus(status));
       }
-      const result = await generateAIText(inputText);
+      const result = await generateAIText(inputText, (p) => setProgress(p));
       setOutputText(result);
     } catch (error) {
       console.error("Rewrite failed:", error);
@@ -142,7 +166,7 @@ const TextToAIPage: React.FC = () => {
             {isProcessing ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                Processing...
+                Processing... {progress}% ({elapsedTime}s elapsed... {getEstimatedTime()})
               </>
             ) : (
               <>
@@ -181,6 +205,11 @@ const TextToAIPage: React.FC = () => {
                  </div>
                )}
             </div>
+            {outputText && (
+              <div className="absolute bottom-4 right-6 text-xs text-slate-400 dark:text-slate-500 font-medium pointer-events-none bg-white/80 dark:bg-slate-800/80 px-2 py-1 rounded backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm">
+                {outputStats.words} words | {outputStats.chars} chars
+              </div>
+            )}
           </div>
         </div>
 

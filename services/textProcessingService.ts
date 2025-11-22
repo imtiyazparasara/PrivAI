@@ -65,6 +65,62 @@ const PROFESSIONAL_SYNONYMS: Record<string, string> = {
   "result": "outcome",
 };
 
+const GENERAL_SUGGESTIONS = [
+  "Use contractions (e.g., 'don't', 'can't') to sound more conversational.",
+  "Inject personal anecdotes or 'I' statements to add warmth.",
+  "Use sensory details (sight, sound, smell) to make descriptions vivid.",
+  "Express uncertainty or opinion (e.g., 'I think', 'maybe') to sound human.",
+  "Add a touch of humor or wit if appropriate.",
+  "Use idioms or colloquialisms to sound less robotic.",
+  "Show, don't just tell. Describe the experience.",
+  "Avoid being overly objective; show some bias or preference.",
+  "Use emotional adjectives to convey feeling.",
+  "Address the reader directly as 'you'.",
+  "Sound less authoritative and more collaborative.",
+  "Read the text aloud to check for natural rhythm.",
+  "Imagine you are explaining this to a friend over coffee.",
+  "Remove unnecessary filler words that don't add meaning.",
+  "Check for repetitive patterns in your writing.",
+  "Ensure your conclusion doesn't start with 'In conclusion'.",
+  "Mix short, punchy sentences with longer, descriptive ones.",
+  "Start some sentences with conjunctions like 'But' or 'And'.",
+  "Break up long paragraphs to improve readability.",
+  "Try asking a rhetorical question to engage the reader.",
+  "Vary your sentence openings; don't start every sentence with 'The' or 'It'.",
+  "Use an em-dash (—) to add a conversational pause.",
+  "Invert sentence structure occasionally for emphasis.",
+  "Combine two short choppy sentences into one flowing thought.",
+  "Split a complex compound sentence into two simpler ones."
+];
+
+const SPECIFIC_SUGGESTIONS: Record<string, string> = {
+  "utilize": "Replace 'utilize' with 'use' for a more natural tone.",
+  "leverage": "Avoid 'leverage' when 'use' or 'take advantage of' works better.",
+  "paramount": "Swap 'paramount' for 'key' or 'important'.",
+  "delve": "Instead of 'delve', try 'dig' or 'explore'.",
+  "facilitate": "Use simpler alternatives for 'facilitate', like 'help'.",
+  "moreover": "Avoid overusing transition words like 'moreover'.",
+  "furthermore": "Cut 'furthermore' to sound less academic.",
+  "commence": "Replace 'commence' with 'start' to sound less formal.",
+  "purchase": "Use 'buy' instead of 'purchase' in casual contexts.",
+  "demonstrate": "Change 'demonstrate' to 'show' for better flow.",
+  "seamlessly": "Avoid 'seamlessly' unless describing actual seams; use 'smoothly'.",
+  "meticulous": "Replace 'meticulous' with 'careful' or 'detailed'.",
+  "endeavor": "Swap 'endeavor' for 'try'.",
+  "approximately": "Use 'about' instead of 'approximately'.",
+  "unleash": "Avoid 'unleash' unless talking about a physical restraint.",
+  "harness": "Change 'harness' to 'use' or 'control'.",
+  "landscape": "Avoid using 'landscape' metaphorically.",
+  "tapestry": "Avoid 'tapestry' unless discussing textiles.",
+  "nuance": "Use 'detail' or 'subtlety' instead of 'nuance'.",
+  "pivotal": "Swap 'pivotal' for 'crucial' or 'central'.",
+  "foster": "Use 'encourage' or 'build' instead of 'foster'.",
+  "transformative": "Avoid 'transformative' unless it's a major change.",
+  "realm": "Use 'area' or 'field' instead of 'realm'.",
+  "underscore": "Use 'emphasize' or 'show' instead of 'underscore'.",
+  "highlight": "Use 'point out' instead of 'highlight'."
+};
+
 // Helper to count stats
 export const getStats = (text: string) => {
   const chars = text.length;
@@ -108,19 +164,48 @@ export const analyzeText = (text: string): AnalysisResult => {
   const avgLength = sentenceLengths.reduce((a, b) => a + b, 0) / (sentenceLengths.length || 1);
   const variance = sentenceLengths.reduce((a, b) => a + Math.pow(b - avgLength, 2), 0) / (sentenceLengths.length || 1);
   
-  // High AI score if: Low variance (uniform sentences) OR High trigger words
-  let aiScoreRaw = (aiTriggersFound / stats.words) * 300; // Density factor
-  if (variance < 10) aiScoreRaw += 20; // Uniform sentences penalty
-  if (variance > 50) aiScoreRaw -= 10; // Human variance bonus
+  // Improved Scoring Logic
+  // 1. Base score from triggers count (direct impact)
+  let aiScoreRaw = aiTriggersFound * 15; 
+  
+  // 2. Density factor (triggers per word) - scales up for shorter texts with triggers
+  aiScoreRaw += (aiTriggersFound / stats.words) * 1000;
+
+  // 3. Variance adjustments
+  if (variance < 5) aiScoreRaw += 30;      // Extremely robotic
+  else if (variance < 12) aiScoreRaw += 15; // Very uniform
+  else if (variance > 50) aiScoreRaw -= 20; // Very human
+  else if (variance > 35) aiScoreRaw -= 10; // Human-ish
+
+  // 4. Length penalty (very short text is hard to judge, bias towards neutral/low unless triggers found)
+  if (stats.words < 30 && aiTriggersFound === 0) aiScoreRaw = 0;
 
   const aiScore = Math.min(Math.max(Math.round(aiScoreRaw), 5), 99);
   const readabilityScore = Math.max(100 - (avgLength * 2), 10); // Simple heuristic
 
   const suggestions: string[] = [];
-  if (aiTriggersFound > 2) suggestions.push("Reduce the use of complex, 'buzzword' vocabulary.");
+  
+  // 1. Specific Trigger-based suggestions
+  flaggedPhrases.forEach(fp => {
+      const suggestion = SPECIFIC_SUGGESTIONS[fp.phrase.toLowerCase()];
+      if (suggestion && !suggestions.includes(suggestion)) {
+          suggestions.push(suggestion);
+      }
+  });
+
+  // 2. Score/Stat based
   if (variance < 15) suggestions.push("Vary your sentence structure. Mix short and long sentences.");
   if (avgLength > 25) suggestions.push("Your sentences are quite long. Try breaking them up.");
   if (stats.words < 20) suggestions.push("Text is too short for accurate analysis.");
+  
+  // 3. General Suggestions (Fill up to 5 if needed)
+  if (suggestions.length < 5) {
+      const shuffled = [...GENERAL_SUGGESTIONS].sort(() => 0.5 - Math.random());
+      for (const s of shuffled) {
+          if (suggestions.length >= 5) break;
+          suggestions.push(s);
+      }
+  }
 
   return {
     aiScore,

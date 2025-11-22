@@ -13,16 +13,16 @@ const HomePage: React.FC = () => {
         <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-3xl mb-10 leading-relaxed">
           The ultimate local AI writing assistant. Humanize text, polish drafts, and analyze content—all running 100% on your device.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
-          <Link 
-            to="/humanize" 
+          <Link
+            to="/humanize"
             className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
           >
             Start Humanizing <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link 
-            to="/text-to-ai" 
+          <Link
+            to="/text-to-ai"
             className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 text-lg font-bold rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center"
           >
             Polish Text
@@ -31,22 +31,22 @@ const HomePage: React.FC = () => {
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl w-full px-4">
-          <FeatureCard 
+          <FeatureCard
             icon={<Shield className="w-8 h-8 text-emerald-500" />}
             title="100% Local & Private"
             description="Your data never leaves your device. No servers, no cloud, no tracking."
           />
-          <FeatureCard 
+          <FeatureCard
             icon={<WifiOff className="w-8 h-8 text-blue-500" />}
             title="No API Needed"
             description="Runs completely offline after initial model download. No API keys required."
           />
-          <FeatureCard 
+          <FeatureCard
             icon={<Infinity className="w-8 h-8 text-purple-500" />}
             title="Unlimited Usage"
             description="Write and rewrite as much as you want. No credit limits or paywalls."
           />
-          <FeatureCard 
+          <FeatureCard
             icon={<Zap className="w-8 h-8 text-amber-500" />}
             title="Real-time AI"
             description="Powered by advanced local LLMs (Llama 3.2) for instant, intelligent results."

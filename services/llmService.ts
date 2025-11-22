@@ -57,12 +57,18 @@ export const getLLM = () => engine;
 export const generateHumanizedText = async (
   text: string, 
   level: string, 
-  mode: string
+  mode: string,
+  lengthMode: string,
+  emotionIntensity: string,
+  onProgress?: (percentage: number) => void
 ): Promise<string> => {
   if (!engine) throw new Error("AI Engine not initialized");
 
+  const inputWords = text.split(/\s+/).length;
+
   const systemPrompt = `You are an expert human writer and editor. Your goal is to rewrite the provided text to sound completely natural, human, and authentic, as if a real person wrote it from scratch.
 
+  CRITICAL INSTRUCTIONS:
   CRITICAL INSTRUCTIONS:
   1.  **Deep Understanding**: First, fully understand the core meaning, intent, and emotional tone of the original text. Do not just swap synonyms.
   2.  **Human Perspective**: Rewrite the text from a human perspective. If the text is a personal story, make it feel personal. If it's professional, make it sound authoritative but not robotic.
@@ -75,6 +81,14 @@ export const generateHumanizedText = async (
       - **Mode: ${mode}**:
           - *General*: Use contractions (can't, don't), idioms, and a conversational tone.
           - *Professional*: Clear, direct, and impactful business/academic language.
+      - **Length: ${lengthMode}**:
+          - *Original*: STRICTLY maintain the original word count (approx ${inputWords} words). Do NOT add any new information, adjectives, or details. The output length must be within 5% of the input length.
+          - *Expansion*: Expand the text by 60%-80%. Add details, examples, and elaborate on the points to make it more comprehensive.
+          - *Shorten*: STRICTLY shorten the text to approx ${Math.ceil(inputWords * 0.5)} words. Remove all redundancy, adjectives, and filler. Keep only the core message.
+      - **Emotion Intensity: ${emotionIntensity}**:
+          - *Neutral*: Maintain a balanced, objective, and calm tone. Avoid strong emotional language.
+          - *Moody*: Add a touch of warmth, empathy, or enthusiasm where appropriate. Make it feel more relatable.
+          - *Passionate*: Use strong, evocative language. Express excitement, urgency, or deep conviction. Make the text feel very human and spirited.
 
   5.  **Output Format**:
       - Output **ONLY** the rewritten text.
@@ -83,9 +97,25 @@ export const generateHumanizedText = async (
       - Do **NOT** add any explanations at the end.
   `;
 
-  const userPrompt = `Original Text:\n"${text}"\n\nRewritten Text:`;
+  let userPrompt = `Original Text:\n"${text}"\n\nRewritten Text:`;
+  if (lengthMode === 'Original') {
+    userPrompt = `Original Text (${inputWords} words):\n"${text}"\n\nRewritten Text (Constraint: Keep word count close to ${inputWords}. Do not add new details.):`;
+  } else if (lengthMode === 'Shorten') {
+    userPrompt = `Original Text (${inputWords} words):\n"${text}"\n\nRewritten Text (Constraint: Shorten to approx ${Math.ceil(inputWords * 0.5)} words. Be concise.):`;
+  }
 
   try {
+    // Estimate tokens for progress bar
+    // Rough estimate: 1 word ~= 1.3 tokens
+    const estimatedInputTokens = Math.ceil(inputWords * 1.3);
+    let expectedOutputTokens = estimatedInputTokens;
+    
+    if (lengthMode === 'Expansion') expectedOutputTokens = Math.ceil(estimatedInputTokens * 1.7);
+    if (lengthMode === 'Shorten') expectedOutputTokens = Math.ceil(estimatedInputTokens * 0.5);
+    
+    // Add buffer for system prompt overhead in calculation if needed, but for output progress we care about generated tokens
+    // We'll cap progress at 99% until done
+    
     const reply = await engine.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
@@ -93,10 +123,29 @@ export const generateHumanizedText = async (
       ],
       temperature: level === 'Heavy' ? 0.85 : level === 'Medium' ? 0.7 : 0.6,
       max_tokens: 2048,
+      stream: true, // Enable streaming
     });
 
-    let content = reply.choices[0].message.content || "";
+    let content = "";
+    let generatedTokens = 0;
+
+    for await (const chunk of reply) {
+        const delta = chunk.choices[0]?.delta?.content || "";
+        content += delta;
+        if (delta) {
+            generatedTokens++; // This is a rough count of chunks, not exact tokens, but close enough for progress
+            // Or better, use length of delta / 4 (chars per token approx)
+             // Actually, chunk usually contains 1 token.
+            
+            if (onProgress) {
+                let percent = Math.min(Math.round((generatedTokens / expectedOutputTokens) * 100), 99);
+                onProgress(percent);
+            }
+        }
+    }
     
+    if (onProgress) onProgress(100);
+
     // Post-processing to remove quotes and conversational filler
     content = content.trim();
     
@@ -148,7 +197,7 @@ export const generateHumanizedText = async (
   }
 };
 
-export const generateAIText = async (text: string): Promise<string> => {
+export const generateAIText = async (text: string, onProgress?: (percentage: number) => void): Promise<string> => {
   if (!engine) throw new Error("AI Engine not initialized");
 
   const systemPrompt = `You are a highly advanced AI writing assistant. Your task is to rewrite the user's text to sound professional, structured, precise, and polished.
@@ -164,6 +213,11 @@ export const generateAIText = async (text: string): Promise<string> => {
   const userPrompt = `Original Text:\n"${text}"\n\nFormal Rewritten Text:`;
 
   try {
+    // Estimate tokens for progress bar
+    const inputWords = text.split(/\s+/).length;
+    const estimatedInputTokens = Math.ceil(inputWords * 1.3);
+    const expectedOutputTokens = Math.ceil(estimatedInputTokens * 1.2);
+
     const reply = await engine.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
@@ -171,9 +225,25 @@ export const generateAIText = async (text: string): Promise<string> => {
       ],
       temperature: 0.3, // Lower temperature for more deterministic/formal output
       max_tokens: 2048,
+      stream: true,
     });
 
-    let content = reply.choices[0].message.content || "";
+    let content = "";
+    let generatedTokens = 0;
+
+    for await (const chunk of reply) {
+        const delta = chunk.choices[0]?.delta?.content || "";
+        content += delta;
+        if (delta) {
+            generatedTokens++;
+            if (onProgress) {
+                let percent = Math.min(Math.round((generatedTokens / expectedOutputTokens) * 100), 99);
+                onProgress(percent);
+            }
+        }
+    }
+    
+    if (onProgress) onProgress(100);
     
     // Post-processing
     content = content.trim();

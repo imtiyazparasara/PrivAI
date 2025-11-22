@@ -9,6 +9,18 @@ export enum WritingMode {
   Professional = 'Professional',
 }
 
+export enum LengthMode {
+  Shorten = 'Shorten',
+  Original = 'Original',
+  Expansion = 'Expansion',
+}
+
+export enum EmotionIntensity {
+  Neutral = 'Neutral',
+  SlightlyEmotional = 'Moody',
+  Passionate = 'Passionate',
+}
+
 export interface AnalysisResult {
   aiScore: number; // 0-100
   readabilityScore: number; // 0-100
