@@ -20,7 +20,6 @@ This means **zero latency** (after load), **zero data leakage**, and **zero API 
 - **Humanize Text**: Transform robotic, AI-generated content into natural, engaging, and human-sounding text.
 - **Text to AI Polish**: The reverse operation—turn casual notes or rough drafts into professional, structured, and grammatically perfect content.
 - **Content Analysis**: Analyze text for "AI-isms", readability scores, and get actionable suggestions for improvement.
-- **Dark/Light Mode**: Fully responsive UI with automatic system theme detection.
 - **Real-time Diff**: Visual highlighting of changes to see exactly what the AI modified.
 
 ## Tech Stack
