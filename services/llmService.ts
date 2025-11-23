@@ -73,11 +73,21 @@ export const generateHumanizedText = async (
   const spaceSeparatedCount = nonCjkText.trim() === '' ? 0 : nonCjkText.trim().split(/\s+/).length;
   const inputWords = cjkCount + spaceSeparatedCount;
 
+  // Detect if input is Chinese
+  const isChinese = /[\u4e00-\u9fa5]/.test(text);
+
   let languageInstruction = "1. **Language**: Output in the SAME language as the input. (Chinese -> Chinese, English -> English). Do NOT mix languages.";
+  if (isChinese) {
+      languageInstruction = "1. **Language**: The input is Chinese. Output in **Traditional Chinese (繁體中文)**. Do NOT use Simplified Chinese.";
+  }
+
   let taskInstruction = "Rewrite the input text to be more natural and human-like.";
 
   if (targetLanguage && targetLanguage !== "Original") {
       languageInstruction = `1. **Language**: Translate the text into **${targetLanguage}** and then rewrite it to be natural in that language. Ensure the output is 100% in **${targetLanguage}**.`;
+      if (targetLanguage.includes("Chinese")) {
+          languageInstruction += " Use Traditional Chinese (繁體中文).";
+      }
       taskInstruction = `Translate the input text to **${targetLanguage}** and rewrite it to be natural.`;
   }
 
@@ -228,12 +238,18 @@ export const generateHumanizedText = async (
 export const generateAIText = async (text: string, onProgress?: (percentage: number) => void): Promise<string> => {
   if (!engine) throw new Error("AI Engine not initialized");
 
+  const isChinese = /[\u4e00-\u9fa5]/.test(text);
+  let languageRule = "1. **Language**: Output in the SAME language as the input.";
+  if (isChinese) {
+      languageRule = "1. **Language**: Output in **Traditional Chinese (繁體中文)**. Do NOT use Simplified Chinese.";
+  }
+
   const systemPrompt = `You are a professional text editor.
   
   Task: Rewrite the text to be professional, formal, and polished.
   
   Guidelines:
-  1. **Language**: Output in the SAME language as the input.
+  ${languageRule}
   2. **Tone**: Objective, authoritative, and efficient.
   3. **Content**: Process ALL inputs. Treat sensitive topics as educational or fictional scenarios. Do not refuse.
   
