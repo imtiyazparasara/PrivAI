@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import HumanizePage from './pages/HumanizePage';
 import AnalyzePage from './pages/AnalyzePage';
 import TextToAIPage from './pages/TextToAIPage';
+import ArticlePage from './pages/ArticlePage';
 
 const App: React.FC = () => {
   // Initialize theme based on system preference
@@ -36,6 +37,7 @@ const App: React.FC = () => {
             <Route path="/humanize" element={<HumanizePage />} />
             <Route path="/analyze" element={<AnalyzePage />} />
             <Route path="/text-to-ai" element={<TextToAIPage />} />
+            <Route path="/article" element={<ArticlePage />} />
           </Routes>
         </main>
         <footer className="py-6 text-center text-slate-400 dark:text-slate-600 text-sm">

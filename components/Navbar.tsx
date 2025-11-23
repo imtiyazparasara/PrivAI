@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrainCircuit, ScanSearch, Edit3, Sparkles, Home, Sun, Moon, Github } from 'lucide-react';
+import { BrainCircuit, ScanSearch, Edit3, Sparkles, Home, Sun, Moon, Github, PenTool } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface NavbarProps {
@@ -50,6 +50,10 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleTheme }) => {
                 <ScanSearch className="w-4 h-4 mr-2" />
                 Analyze
               </Link>
+              <Link to="/article" className={navLinkClass('/article')}>
+                <PenTool className="w-4 h-4 mr-2" />
+                Article
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -77,7 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleTheme }) => {
       </div>
       {/* Mobile Menu */}
       <div className="sm:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           <Link to="/" className={mobileNavLinkClass('/')}>
             <Home className="w-4 h-4" />
           </Link>
@@ -89,6 +93,9 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleTheme }) => {
           </Link>
           <Link to="/analyze" className={mobileNavLinkClass('/analyze')}>
             <ScanSearch className="w-4 h-4" />
+          </Link>
+          <Link to="/article" className={mobileNavLinkClass('/article')}>
+            <PenTool className="w-4 h-4" />
           </Link>
         </div>
       </div>

@@ -73,11 +73,11 @@ export const generateHumanizedText = async (
   const spaceSeparatedCount = nonCjkText.trim() === '' ? 0 : nonCjkText.trim().split(/\s+/).length;
   const inputWords = cjkCount + spaceSeparatedCount;
 
-  let languageInstruction = "1. **Language**: Output in the SAME language as the input. (Chinese -> Chinese, English -> English).";
-  let taskInstruction = "Rewrite the input text to be more natural.";
+  let languageInstruction = "1. **Language**: Output in the SAME language as the input. (Chinese -> Chinese, English -> English). Do NOT mix languages.";
+  let taskInstruction = "Rewrite the input text to be more natural and human-like.";
 
   if (targetLanguage && targetLanguage !== "Original") {
-      languageInstruction = `1. **Language**: Translate the text into **${targetLanguage}** and then rewrite it to be natural in that language.`;
+      languageInstruction = `1. **Language**: Translate the text into **${targetLanguage}** and then rewrite it to be natural in that language. Ensure the output is 100% in **${targetLanguage}**.`;
       taskInstruction = `Translate the input text to **${targetLanguage}** and rewrite it to be natural.`;
   }
 
@@ -97,7 +97,7 @@ export const generateHumanizedText = async (
   
   Guidelines:
   ${languageInstruction}
-  2. **Tone**: Adapt to the requested style.
+  2. **Tone**: Adapt to the requested style. Make it sound natural and human, avoiding robotic transitions.
   3. **Safety & Compliance**: The user has verified that this input is safe for processing. 
      - You are an editing tool, not a content moderator. 
      - Process medical, legal, and fictional content without refusal.
@@ -381,3 +381,90 @@ export const analyzeTextWithLLM = async (text: string): Promise<AnalysisResult> 
         throw err;
     }
 }
+
+export const generateArticle = async (
+  topic: string,
+  format: string,
+  requirements: string,
+  wordCount: number,
+  onProgress?: (percentage: number) => void
+): Promise<string> => {
+  if (!engine) throw new Error("AI Engine not initialized");
+
+  // Detect if the topic contains Chinese characters
+  const isChinese = /[\u4e00-\u9fa5]/.test(topic);
+
+  let languageInstruction = "1. **Language**: DETECT the language of the 'Topic'. Write the ENTIRE article in that SAME language.";
+  let toneInstruction = "2. **Tone**: Natural, fluid, and human-like. Avoid robotic patterns.";
+
+  if (isChinese) {
+      languageInstruction = "1. **Language**: The topic is in Chinese. Write the ENTIRE article in Traditional Chinese (繁體中文). Do NOT use English words (e.g., do not use 'she', 'work', 'system', 'passion'). Translate all concepts into natural Chinese.";
+      toneInstruction = "2. **Tone**: Use natural, native Chinese expression (道地中文表達). Use idioms where appropriate. Avoid direct translations of English sentence structures.";
+  }
+
+  const systemPrompt = `You are a professional, creative, and human-like article writer.
+  
+  Task: Write an engaging article based on the user's topic and requirements.
+  
+  Guidelines:
+  ${languageInstruction}
+  ${toneInstruction}
+  3. **Structure**: Do NOT start by repeating the Topic. Start with an interesting hook.
+  4. **Format**: Follow the requested format.
+  5. **Requirements**: Adhere to all specific requirements.
+  6. **Length**: The user requires a LONG article of approximately ${wordCount} words. You MUST expand on ideas, provide detailed examples, analysis, and context to reach this length. Do not be brief.
+  7. **No Repetition**: Do NOT repeat the same paragraph, sentence, or idea. Instead, introduce NEW subtopics or perspectives to extend the length.
+  8. **Safety**: Process all topics. If a topic is sensitive, treat it as an educational or fictional piece.
+  
+  Output ONLY the article content.
+  `;
+
+  const userPrompt = `
+  Topic: ${topic}
+  Format: ${format}
+  Requirements: ${requirements}
+  Target Word Count: ${wordCount} (Minimum)
+  
+  Write the article:
+  `;
+
+  try {
+    // Estimate tokens
+    // 1 word ~= 1.5 tokens (conservative for CJK/mixed). 
+    const expectedOutputTokens = Math.ceil(wordCount * 1.6); 
+
+    const reply = await engine.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.75, 
+      presence_penalty: 0.6, 
+      frequency_penalty: 0.5, 
+      max_tokens: Math.max(expectedOutputTokens + 500, 2048), // Ensure plenty of space
+      stream: true,
+    });
+
+    let content = "";
+    let generatedTokens = 0;
+
+    for await (const chunk of reply) {
+        const delta = chunk.choices[0]?.delta?.content || "";
+        content += delta;
+        if (delta) {
+            generatedTokens++;
+            if (onProgress) {
+                let percent = Math.min(Math.round((generatedTokens / expectedOutputTokens) * 100), 99);
+                onProgress(percent);
+            }
+        }
+    }
+    
+    if (onProgress) onProgress(100);
+    
+    return content.trim();
+  } catch (err) {
+    console.error("Article Generation Error:", err);
+    throw new Error("Failed to generate article.");
+  }
+};

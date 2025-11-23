@@ -1,7 +1,6 @@
 # Humanize-Web (HumanizeAI)
 
 [![Code Size](https://img.shields.io/github/languages/code-size/HenryLok0/Humanize-Web?style=flat-square&logo=github)](https://github.com/HenryLok0/Humanize-Web)
-[![npm version](https://img.shields.io/npm/v/Humanize-Web?style=flat-square)](https://www.npmjs.com/package/Humanize-Web)
 
 [![MIT License](https://img.shields.io/github/license/HenryLok0/Humanize-Web?style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/HenryLok0/Humanize-Web?style=flat-square)](https://github.com/HenryLok0/Humanize-Web/stargazers)
